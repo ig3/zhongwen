@@ -101,30 +101,29 @@ function enableTab() {
             iframe.contentDocument.addEventListener('mousemove', onMouseMove);
             iframe.contentDocument.addEventListener('keydown', onKeyDown);
         }
+    }
 
-        observer = new MutationObserver((mutationsList, observer) => {
-            for (let mutation of mutationsList) {
-                if (mutation.addedNodes) {
-                    for (let node of mutation.addedNodes) {
-                        if (node.nodeType === 1 && node.nodeName === 'IFRAME') {
-                            node.addEventListener('load', (event) => {
-                                node.contentDocument
-                                    .addEventListener('mousemove', onMouseMove);
-                                node.contentDocument
-                                    .addEventListener('keydown', onKeyDown);
-                            });
-                        }
+    observer = new MutationObserver((mutationsList, observer) => {
+        for (let mutation of mutationsList) {
+            if (mutation.addedNodes) {
+                for (let node of mutation.addedNodes) {
+                    if (node.nodeType === 1 && node.nodeName === 'IFRAME') {
+                        node.addEventListener('load', (event) => {
+                            node.contentDocument
+                                .addEventListener('mousemove', onMouseMove);
+                            node.contentDocument
+                                .addEventListener('keydown', onKeyDown);
+                        });
                     }
                 }
             }
-        });
+        }
+    });
 
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
-
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 }
 
 function disableTab() {
@@ -133,20 +132,28 @@ function disableTab() {
 
     if (observer) {
         observer.disconnect();
-
-        document.getElementsByTagName('iframe')
-        .forEach(iframe => {
-            iframe.contentDocument.removeEventListener('mousemove', onMouseMove);
-            iframe.contentDocument.removeEventListener('keydown', onKeyDown);
-        });
+        observer = undefined;
     }
 
-    let popup = document.getElementById('zhongwen-window');
+    const popup = document.getElementById('zhongwen-window');
     if (popup) {
         popup.parentNode.removeChild(popup);
     }
 
     clearHighlight();
+
+    document.getElementsByTagName('iframe')
+    .forEach(iframe => {
+        iframe.contentDocument.removeEventListener('mousemove', onMouseMove);
+        iframe.contentDocument.removeEventListener('keydown', onKeyDown);
+
+        const popup = iframe.contentDocument.getElementById('zhongwen-window');
+        if (popup) {
+            popup.parentNode.removeChild(popup);
+        }
+
+    });
+
 }
 
 function onKeyDown(keyDown) {
@@ -814,18 +821,24 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     selDoc = doc;
 }
 
+/**
+ * Clear the current selection.
+ * The selection might be in the outer document or in a document in an
+ * iframe of the outer document. selDoc is the document containing the
+ * selection. It should always be set if there is a selection.
+ *
+ * I don't know why there is conditional empty of the selection. Why not
+ * empty it in every case?
+ */
 function clearHighlight() {
+  if (!selDoc) return;
 
-    if (selText === null) {
-        return;
-    }
-
-    let selection = selDoc.getSelection();
-    if (selection.isCollapsed || selText === selection.toString()) {
-        selection.empty();
-    }
-    selText = null;
-    selDoc = null;
+  let selection = selDoc.getSelection();
+  if (selection.isCollapsed || selText === selection.toString()) {
+    selection.empty();
+  }
+  selText = null;
+  selDoc = null;
 }
 
 function isVisible() {
@@ -1143,25 +1156,28 @@ let miniHelp = `
     </table>`;
 
 // event listener
-chrome.runtime.onMessage.addListener(
-    function (request) {
-        switch (request.type) {
-            case 'enable':
-                enableTab();
-                config = request.config;
-                break;
-            case 'disable':
-                disableTab();
-                break;
-            case 'showPopup':
-                if (!request.isHelp || window === window.top) {
-                    showPopup(request.text);
-                }
-                break;
-            case 'showHelp':
-                showPopup(miniHelp);
-                break;
-            default:
-        }
-    }
-);
+// Only listen for messages in the top frame - not in iframes
+if (window.top === window.self) {
+  chrome.runtime.onMessage.addListener(
+      function (request) {
+          switch (request.type) {
+              case 'enable':
+                  enableTab();
+                  config = request.config;
+                  break;
+              case 'disable':
+                  disableTab();
+                  break;
+              case 'showPopup':
+                  if (!request.isHelp || window === window.top) {
+                      showPopup(request.text);
+                  }
+                  break;
+              case 'showHelp':
+                  showPopup(miniHelp);
+                  break;
+              default:
+          }
+      }
+  );
+}
