@@ -80,6 +80,10 @@ let popY = 0;
 
 let timer;
 
+let deferredMouseMove;
+
+let mouseMoveTimer;
+
 let altView = 0;
 
 let savedSearchResults = [];
@@ -436,7 +440,27 @@ function onKeyDown(keyDown) {
     }
 }
 
+// Rate limit processing of mouse move events
 function onMouseMove(mouseMove) {
+  deferredMouseMove = mouseMove;
+  if (!mouseMoveTimer) {
+    deferMouseMoveProcessing(50);
+  }
+}
+
+function deferMouseMoveProcessing (delay) {
+  mouseMoveTimer = setTimeout(() => {
+    mouseMoveTimer = null;
+    if (deferredMouseMove) {
+      processMouseMove(deferredMouseMove);
+      deferredMouseMove = null;
+      deferMouseMoveProcessing(400);
+    }
+  }, delay);
+}
+
+
+function processMouseMove(mouseMove) {
     ownerDocument = mouseMove.target.ownerDocument;
 
     iframe = ownerDocument.defaultView.frameElement;
