@@ -56,6 +56,10 @@ let savedRangeNode;
 
 let savedRangeOffset;
 
+let selTop;
+
+let selBotton;
+
 let selText;
 
 let selDoc;
@@ -499,6 +503,8 @@ function processMouseMove(mouseMove) {
     let rangeOffset;
 
     // Handle Chrome and Firefox
+    // caretRangeFromPoint is a non-standard function supported by all
+    // browsers except Firefox.
     if (ownerDocument.caretRangeFromPoint) {
         range = ownerDocument.caretRangeFromPoint(mouseMove.clientX, mouseMove.clientY);
         if (range === null) {
@@ -781,17 +787,14 @@ function showPopup(html, elem, x, y, looseWidth) {
                 }
             }
 
-            // below the mouse
-            let v = 25;
-
             // go up if necessary
-            if (y + v + pH > window.innerHeight) {
-                let t = y - pH - 30;
+            if (y + 25 + pH > window.innerHeight) {
+                let t = selTop ? selTop - pH : y - pH - 30;
                 if (t >= 0) {
                     y = t;
                 }
             } else  {
-                y += v;
+                y = (selBotton ? selBotton : y + 25);
             }
 
             x += window.scrollX;
@@ -835,6 +838,14 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     let range = doc.createRange();
     range.setStart(rangeStartNode, rangeStartOffset);
     range.setEnd(selEnd.node, offset);
+    let clientRects = range.getClientRects();
+    selTop = clientRects[0].top;
+    selBotton = clientRects[0].bottom;
+    if (iframe) {
+      let rect = iframe.getBoundingClientRect();
+      selTop += rect.y;
+      selBotton += rect.y;
+    }
 
     let sel = doc.getSelection();
     if (!sel.isCollapsed && selText !== sel.toString())
