@@ -454,7 +454,7 @@ function deferMouseMoveProcessing (delay) {
     if (deferredMouseMove) {
       processMouseMove(deferredMouseMove);
       deferredMouseMove = null;
-      deferMouseMoveProcessing(400);
+      deferMouseMoveProcessing(200);
     }
   }, delay);
 }
