@@ -66,7 +66,7 @@ let selDoc;
 
 let selElement;
 
-let selElementCursor;
+// let selElementCursor;
 
 let clientX;
 
@@ -858,16 +858,15 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     sel.addRange(range);
     selText = sel.toString();
     selDoc = doc;
-    const el = sel.anchorNode.parentElement;
-    if (el) {
-      if (selElement && selElement !== el) {
-        selElement.style.cursor = selElementCursor;
-      }
-      if (selElement !== el) {
-        selElement = el;
+    try {
+      selElement = sel.anchorNode.parentElement;
+      if (selElement) {
         selElementCursor = selElement.style.cursor;
+        console.log('cursor: ', selElementCursor);
         selElement.style.cursor = 'none';
       }
+    } catch (err) {
+      console.log(err);
     }
 }
 
@@ -887,12 +886,9 @@ function clearHighlight() {
   if (selection.isCollapsed || selText === selection.toString()) {
     selection.empty();
     try {
-      if (selElement && selElement.length) {
-        selElement.forEach(entry => {
-          const [el, cursor] = entry;
-          el.style.cursor = cursor;
-        });
-        selElement.splice(0);
+      if (selElement) {
+        selElement.style.cursor = selElementCursor : selElementCursor : 'auto';
+        selElement = undefined;
       }
     } catch (err) {
       console.log(err);
