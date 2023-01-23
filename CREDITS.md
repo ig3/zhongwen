@@ -1,5 +1,13 @@
 ### Contributors
 
+#### @ig3/zhongwen Firefox extension
+
+The ig3 Zhongwen Firefox extension is a fork and modification of the
+Zhongwen Chrome extension written by Christian Schiller.
+
+
+#### Zhongwen Chrome extension
+
 The Zhongwen Chrome extension was written by Christian Schiller with
 contributions from the following people:
 

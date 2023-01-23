@@ -1,19 +1,10 @@
 # 中文 Zhongwen
 
-[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/kkmlkkjojmombglmlpbpapmhcaljjkde)](https://chrome.google.com/webstore/detail/zhongwen-chinese-english/kkmlkkjojmombglmlpbpapmhcaljjkde)
-[![Chrome Users](https://img.shields.io/chrome-web-store/users/kkmlkkjojmombglmlpbpapmhcaljjkde?label=chrome%20users)](https://chrome.google.com/webstore/detail/zhongwen-chinese-english/kkmlkkjojmombglmlpbpapmhcaljjkde)
-[![Mozilla Add-on Version](https://img.shields.io/amo/v/zhongwen)](https://addons.mozilla.org/en-US/firefox/addon/zhongwen/)
-[![Firefox Users](https://img.shields.io/amo/users/zhongwen?label=firefox%20users)](https://addons.mozilla.org/en-US/firefox/addon/zhongwen/)
-
 ## A Chinese Pop-Up Dictionary and Learning Tool
 
 This browser extension allows you to translate Chinese characters and words
 by simply hovering over them with the mouse.  
 It also contains useful features for learners of the Chinese language.
-
-[![Chrome](https://storage.googleapis.com/chrome-gcs-uploader.appspot.com/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/UV4C4ybeBTsZt43U4xis.png)](https://chrome.google.com/extensions/detail/kkmlkkjojmombglmlpbpapmhcaljjkde)
-[![Firefox](https://addons.cdn.mozilla.net/static/img/addons-buttons/AMO-button_1.png)](https://addons.mozilla.org/en-US/firefox/addon/zhongwen)
-
 
 ## Highlights
 - Supports both traditional and simplified characters.
@@ -40,18 +31,10 @@ It also contains useful features for learners of the Chinese language.
 
 ## Installation
 
-### Chrome
-The Zhongwen Chrome extension is available via the Chrome Web Store:  
-https://chrome.google.com/extensions/detail/kkmlkkjojmombglmlpbpapmhcaljjkde
-
-Simply click on the "Add to Chrome" button to start the installation.
-
-
 ### Firefox
-The Zhongwen Firefox extension is available via the Firefox Add-Ons site:  
-https://addons.mozilla.org/en-US/firefox/addon/zhongwen
-
-Simply click on the "Add to Firefox" button to start the installation.
+The ig3 Zhongwen extension is not published. To install it, clone the git
+repository, zip the contents of the directory into zhongwen.xpi and load
+that into Firefox via 'Install add-on from File'..
 
 
 ## How Does It Work?
@@ -196,10 +179,10 @@ each one.
 
 
 ## Legal
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+This program is free software;
+you can redistribute it and/or modify it under the terms of the
+GNU General Public License, Version 2, June 1991
+as published by the Free Software Foundation
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -212,4 +195,5 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ---
 
+*Copyright (C) 2022 Ian Goodacre*
 *Copyright (C) 2019 Christian Schiller*
