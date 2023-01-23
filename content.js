@@ -886,13 +886,9 @@ function clearHighlight() {
   let selection = selDoc.getSelection();
   if (selection.isCollapsed || selText === selection.toString()) {
     selection.empty();
-    try {
-      if (selElement) {
-        selElement.style.cursor = selElementCursor;
-        selElement = undefined;
-      }
-    } catch (err) {
-      console.log(err);
+    if (selElement) {
+      selElement.style.cursor = selElementCursor;
+      selElement = undefined;
     }
   }
   selText = null;
