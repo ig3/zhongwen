@@ -784,21 +784,14 @@ function showPopup(html, elem, x, y, looseWidth) {
             }
         } else {
             // go left if necessary
-            if (x + pW > window.innerWidth - 20) {
-                x = (window.innerWidth - pW) - 20;
-                if (x < 0) {
-                    x = 0;
-                }
+            if (x + pW + 10 > window.innerWidth) {
+                x = Math.max(0, window.innerWidth - pW - 10);
             }
 
             // go up if necessary
-            if (y + 25 + pH > window.innerHeight) {
-                let t = selTop ? selTop - pH : y - pH - 30;
-                if (t >= 0) {
-                    y = t;
-                }
-            } else  {
-                y = (selBotton ? selBotton : y + 25);
+            y = selBotton ? selBotton : y + 25;
+            if (y + pH + 10 > window.innerHeight) {
+                y = Math.max(0, selTop ? selTop - pH : y - pH - 30);
             }
 
             x += window.scrollX;
