@@ -32,9 +32,18 @@ It also contains useful features for learners of the Chinese language.
 ## Installation
 
 ### Firefox
-The ig3 Zhongwen extension is not published. To install it, clone the git
-repository, zip the contents of the directory into zhongwen.xpi and load
-that into Firefox via 'Install add-on from File'..
+The ig3 Zhongwen extension is not published.
+
+```
+$ git clone https://github.com/ig3/zhongwen
+$ cd zhongwen
+$ npm install
+$ npm run build
+```
+
+This will produce a zip file in the web-ext-artifacts directory.
+
+In firefox, Add-ons Manager, load this file via 'Install add-on from File'.
 
 
 ## How Does It Work?

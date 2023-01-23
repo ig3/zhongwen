@@ -18,13 +18,15 @@
   "devDependencies": {
     "eslint": "^7.16.0",
     "stylelint": "^13.8.0",
-    "stylelint-config-recommended": "^3.0.0"
+    "stylelint-config-recommended": "^3.0.0",
+    "web-ext": "^7.4.0"
   },
   "stylelint": {
     "extends": "stylelint-config-recommended"
   },
   "scripts": {
     "lint": "eslint --fix *.js js/options.js js/wordlist.js js/zhuyin.js",
-    "csslint": "stylelint css/content.css css/wordlist.css"
+    "csslint": "stylelint css/content.css css/wordlist.css",
+    "build": "web-ext build"
   }
 }
