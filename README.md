@@ -2,9 +2,13 @@
 
 ## A Chinese Pop-Up Dictionary and Learning Tool
 
-This browser extension allows you to translate Chinese characters and words
-by simply hovering over them with the mouse.  
-It also contains useful features for learners of the Chinese language.
+This is a modified fork of
+[Zhongwen](https://github.com/cschiller/zhongwen).
+
+Changes from the original include:
+ * supports lookup in iframes
+ (see [Zhongwen issue 85](https://github.com/cschiller/zhongwen/issues/85))
+ * Improved positioning of pop-up
 
 ## Highlights
 - Supports both traditional and simplified characters.
@@ -32,7 +36,11 @@ It also contains useful features for learners of the Chinese language.
 ## Installation
 
 ### Firefox
-The ig3 Zhongwen extension is not published.
+
+Available as an
+[add-on](https://addons.mozilla.org/en-US/firefox/addon/ig3-zhongwen/)
+
+Or, from the source:
 
 ```
 $ git clone https://github.com/ig3/zhongwen
