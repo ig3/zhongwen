@@ -110,8 +110,10 @@ function enableTab() {
     let iframes = document.getElementsByTagName('iframe');
     if (iframes) {
         for (let iframe of iframes) {
+          if (iframe.contentDocument) {
             iframe.contentDocument.addEventListener('mousemove', onMouseMove);
             iframe.contentDocument.addEventListener('keydown', onKeyDown);
+          }
         }
     }
 
@@ -859,7 +861,8 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
       if (selElement !== el) {
         selElement = el;
         selElementCursor = selElement.style.cursor;
-        selElement.style.cursor = 'none';
+        selElement.style.cursor = 'url(' +
+          browser.extension.getURL('images/cursor.png') + ') 32 16, crosshair';
       }
     }
 }
