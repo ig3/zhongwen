@@ -483,6 +483,8 @@ function processMouseMove(mouseMove) {
     if (ownerDocument.caretRangeFromPoint) {
         range = ownerDocument.caretRangeFromPoint(mouseMove.clientX, mouseMove.clientY);
         if (range === null) {
+            clearHighlight();
+            hidePopup();
             return;
         }
         rangeNode = range.startContainer;
@@ -490,6 +492,8 @@ function processMouseMove(mouseMove) {
     } else if (ownerDocument.caretPositionFromPoint) {
         range = ownerDocument.caretPositionFromPoint(mouseMove.clientX, mouseMove.clientY);
         if (range === null) {
+            clearHighlight();
+            hidePopup();
             return;
         }
         rangeNode = range.offsetNode;
@@ -774,9 +778,27 @@ function showPopup(html, elem, x, y, looseWidth) {
 function onWindowMessage (event) {
   if (event.data.type === 'show-pop-up') {
     bubbleShowPopup(event);
+  } else if (event.data.type === 'hide-pop-up') {
+    bubbleHidePopup(event);
   } else {
     console.log('Unsupported window message: ', event.data.type);
     return;
+  }
+}
+
+function bubbleHidePopup (event) {
+  if (window === window.top) {
+    topHidePopup(event.data);
+  } else {
+    window.parent.postMessage(event.data, '*');
+  }
+}
+
+function topHidePopup (data) {
+  let popup = document.getElementById('zhongwen-window');
+  if (popup) {
+    popup.style.display = 'none';
+    popup.textContent = '';
   }
 }
 
@@ -905,10 +927,13 @@ function topShowPopup (data) {
 }
 
 function hidePopup() {
-    let popup = document.getElementById('zhongwen-window');
-    if (popup) {
-        popup.style.display = 'none';
-        popup.textContent = '';
+    const message = {
+      type: 'hide-pop-up'
+    };
+    if (window === window.top) {
+      topHidePopup(message);
+    } else {
+      window.parent.postMessage(message, '*');
     }
 }
 
