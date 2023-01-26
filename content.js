@@ -475,8 +475,11 @@ function processMouseMove(mouseMove) {
 
     iframe = ownerDocument.defaultView.frameElement;
 
-    if (mouseMove.target.nodeName === 'TEXTAREA' || mouseMove.target.nodeName === 'INPUT'
-        || mouseMove.target.nodeName === 'DIV') {
+    if (
+      mouseMove.target.nodeName === 'TEXTAREA' ||
+      mouseMove.target.nodeName === 'INPUT' ||
+      mouseMove.target.nodeName === 'DIV'
+    ) {
 
         let div = document.getElementById('zhongwenDiv');
 
