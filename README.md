@@ -212,5 +212,5 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ---
 
-*Copyright (C) 2022 Ian Goodacre*
+*Copyright (C) 2023 Ian Goodacre*
 *Copyright (C) 2019 Christian Schiller*
