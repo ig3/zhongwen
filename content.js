@@ -56,9 +56,11 @@ let savedRangeNode;
 
 let savedRangeOffset;
 
+let selLeft;
+
 let selTop;
 
-let selBotton;
+let selBottom;
 
 let selText;
 
@@ -77,8 +79,6 @@ let selStartDelta;
 let selStartIncrement;
 
 let observer;
-
-let iframe;
 
 let ownerDocument;
 
@@ -106,38 +106,7 @@ let zwnj = /\u200c/g;
 function enableTab() {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('keydown', onKeyDown);
-
-    let iframes = document.getElementsByTagName('iframe');
-    if (iframes) {
-        for (let iframe of iframes) {
-          if (iframe.contentDocument) {
-            iframe.contentDocument.addEventListener('mousemove', onMouseMove);
-            iframe.contentDocument.addEventListener('keydown', onKeyDown);
-          }
-        }
-    }
-
-    observer = new MutationObserver((mutationsList, observer) => {
-        for (let mutation of mutationsList) {
-            if (mutation.addedNodes) {
-                for (let node of mutation.addedNodes) {
-                    if (node.nodeType === 1 && node.nodeName === 'IFRAME') {
-                        node.addEventListener('load', (event) => {
-                            node.contentDocument
-                                .addEventListener('mousemove', onMouseMove);
-                            node.contentDocument
-                                .addEventListener('keydown', onKeyDown);
-                        });
-                    }
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+    window.addEventListener('message', onWindowMessage);
 }
 
 function disableTab() {
@@ -155,19 +124,6 @@ function disableTab() {
     }
 
     clearHighlight();
-
-    document.getElementsByTagName('iframe')
-    .forEach(iframe => {
-        iframe.contentDocument.removeEventListener('mousemove', onMouseMove);
-        iframe.contentDocument.removeEventListener('keydown', onKeyDown);
-
-        const popup = iframe.contentDocument.getElementById('zhongwen-window');
-        if (popup) {
-            popup.parentNode.removeChild(popup);
-        }
-
-    });
-
 }
 
 function onKeyDown(keyDown) {
@@ -471,10 +427,15 @@ function deferMouseMoveProcessing (delay) {
 
 
 function processMouseMove(mouseMove) {
+  try {
     ownerDocument = mouseMove.target.ownerDocument;
 
-    iframe = ownerDocument.defaultView.frameElement;
+    const div = document.getElementById('zhongwen-window');
+    if (div && div.matches(":hover")) {
+      return;
+    }
 
+    // TODO: is located appropriately? It looks out of place.
     if (
       mouseMove.target.nodeName === 'TEXTAREA' ||
       mouseMove.target.nodeName === 'INPUT' ||
@@ -485,7 +446,12 @@ function processMouseMove(mouseMove) {
 
         if (mouseMove.altKey) {
 
-            if (!div && (mouseMove.target.nodeName === 'TEXTAREA' || mouseMove.target.nodeName === 'INPUT')) {
+            if (
+              !div && (
+                mouseMove.target.nodeName === 'TEXTAREA' ||
+                mouseMove.target.nodeName === 'INPUT'
+              )
+            ) {
 
                 div = makeDiv(mouseMove.target);
                 document.body.appendChild(div);
@@ -573,6 +539,9 @@ function processMouseMove(mouseMove) {
         clearHighlight();
         hidePopup();
     }
+  } catch (err) {
+    console.log('processMouseMove failed with: ', err);
+  }
 }
 
 function triggerSearch() {
@@ -708,59 +677,53 @@ function getTextFromSingleNode(node, selEndList, maxLength) {
     }
 }
 
+/**
+ * If an element is passed, pop-up position is:
+ *   - top-left of viewport if altView === 1
+ *   - bottom-right of viewport if altView === 2
+ *   - relative to the option element if element is a select option
+ *   - relative to the (x, y) coordinates otherwise
+ *
+ * If no element is passed, pop-up position is top-left of viewport.
+ *
+ * If the pop-up is not at top-left or bottom-right, then if a select
+ * option element is given, it is positioned relative to that element.
+ * Otherwise it is positioned relative to the given (x, y) coordinates
+ * or, if selTop and selBottom are set, then these are used for y.
+ *
+ * For relative positioning we want three coordinates:
+ *  avoidLeft - left edge of the rectangle to avoid
+ *  avoidTop - top edge of the rectangle to avoid
+ *  avoidBottom - bottom edge of the rectangle to avoid
+ *
+ * Pop-up location:
+ *  - immediately below avoid rectangle, left aligned with it
+ *  - immediately below avoid rectangle, to the right edge of viewport
+ *  - immediately above avoid rectangle, left aligned with it
+ *  - immediately above avoid rectangle, to the right edge of viewport
+ *  - top-left of viewport
+ *  - bottom-right of viewport
+ *
+ */
 function showPopup(html, elem, x, y, looseWidth) {
-    if (iframe) {
-        let rect = iframe.getBoundingClientRect();
-        x += rect.x;
-        y += rect.y;
-    }
+  try {
+    const message = {
+      type: 'show-pop-up',
+      position: 'unchanged',
+      looseWidth: looseWidth,
+      html: html
+    };
 
     if (!x || !y) {
         x = y = 0;
     }
 
-    let popup = document.getElementById('zhongwen-window');
-
-    if (!popup) {
-        popup = document.createElement('div');
-        popup.setAttribute('id', 'zhongwen-window');
-        document.documentElement.appendChild(popup);
-    }
-
-    popup.style.width = 'auto';
-    popup.style.height = 'auto';
-    popup.style.maxWidth = (looseWidth ? '' : '600px');
-    popup.className = `background-${config.css} tonecolor-${config.toneColorScheme}`;
-
-    $(popup).html(html);
-
     if (elem) {
-        popup.style.top = '-1000px';
-        popup.style.left = '0px';
-        popup.style.display = '';
 
-        let pW = popup.offsetWidth;
-        let pH = popup.offsetHeight;
-
-        if (pW <= 0) {
-            pW = 200;
-        }
-        if (pH <= 0) {
-            pH = 0;
-            let j = 0;
-            while ((j = html.indexOf('<br/>', j)) !== -1) {
-                j += 5;
-                pH += 22;
-            }
-            pH += 25;
-        }
-
-        if (altView === 1) {
-            x = window.scrollX;
-            y = window.scrollY;
-        } else if (altView === 2) {
-            x = (window.innerWidth - (pW + 20)) + window.scrollX;
-            y = (window.innerHeight - (pH + 20)) + window.scrollY;
+        if (altView === 1) {  // top left
+            message.position = 'top-left';
+        } else if (altView === 2) { // bottom right
+            message.position = 'bottom-right';
         } else if (elem instanceof window.HTMLOptionElement) {
 
             x = 0;
@@ -777,42 +740,168 @@ function showPopup(html, elem, x, y, looseWidth) {
                 y -= elem.offsetTop;
             }
 
-            if (x + popup.offsetWidth > window.innerWidth) {
-                // too much to the right, go left
-                x -= popup.offsetWidth + 5;
-                if (x < 0) {
-                    x = 0;
-                }
-            } else {
-                // use SELECT's width
-                x += elem.parentNode.offsetWidth + 5;
-            }
+            x += elem.parentNode.offsetWidth + 5;
+
+            message.position = 'avoid';
+            message.avoidLeft = x;
+            message.avoidTop = y;
+            message.avoidBottom = y + elem.parentNode.clientHeight;
         } else {
-            // go left if necessary
-            if (x + pW + 10 > window.innerWidth) {
-                x = Math.max(0, window.innerWidth - pW - 10);
-            }
-
-            // go up if necessary
-            y = selBotton ? selBotton : y + 25;
-            if (y + pH + 10 > window.innerHeight) {
-                y = Math.max(0, selTop ? selTop - pH : y - pH - 30);
-            }
-
-            x += window.scrollX;
-            y += window.scrollY;
+            // x += window.scrollX;
+            // y += window.scrollY;
+            message.position = 'avoid';
+            message.avoidLeft = selLeft;
+            message.avoidTop = selTop;
+            message.avoidBottom = selBottom;
         }
     } else {
-        x += window.scrollX;
-        y += window.scrollY;
+        message.position = 'top-left';
+    }
+
+    if (window === window.top) {
+      topShowPopup(message);
+    } else {
+      window.parent.postMessage(message, '*');
+    }
+  } catch (err) {
+    console.log('showPopup failed with: ', err);
+  }
+}
+
+/**
+ * onWindowMessage handles messages sent by window.postMessage().
+ */
+function onWindowMessage (event) {
+  if (event.data.type === 'show-pop-up') {
+    bubbleShowPopup(event);
+  } else {
+    console.log('Unsupported window message: ', event.data.type);
+    return;
+  }
+}
+
+function bubbleShowPopup (event) {
+  if (event.data.position === 'avoid') {
+    // Offset coordinates into this window
+    const iframes = document.getElementsByTagName('iframe');
+    for (const iframe of iframes) {
+      if (iframe.contentWindow !== event.source) continue;
+      const { x, y } = iframe.getBoundingClientRect();
+      event.data.avoidLeft += x;
+      event.data.avoidTop += y;
+      event.data.avoidBottom += y;
+    }
+  }
+
+  if (window === window.top) {
+    topShowPopup(event.data);
+  } else {
+    // bubble up
+    window.parent.postMessage(event.data, '*');
+  }
+}
+
+/**
+ * topShowPopup shows the pop-up in this, the top window
+ *
+ * This actually renders and reveals the pop-up
+ */
+function topShowPopup (data) {
+  try {
+    let popup = document.getElementById('zhongwen-window');
+    const looseWidth = false; // It seems not used but placeholder, in case...
+
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.setAttribute('id', 'zhongwen-window');
+        document.documentElement.appendChild(popup);
+    }
+
+    popup.style.width = 'auto';
+    popup.style.height = 'auto';
+    popup.style.maxWidth = (looseWidth ? '' : '600px');
+    popup.className =
+      `background-${config.css} tonecolor-${config.toneColorScheme}`;
+
+    $(popup).html(data.html);
+    popup.style.top = '-1000px';
+    popup.style.left = '0px';
+    popup.style.display = ''; // Neet it displayed so dimensions are correct
+
+    let x = -1;
+    let y = -1;
+
+    let pW = popup.offsetWidth;
+    let pH = popup.offsetHeight;
+
+
+    if (pW <= 0) {
+        pW = 200;
+    }
+    if (pH <= 0) {
+      pH = 0;
+      let j = 0;
+      while ((j = data.html.indexOf('<br/>', j)) !== -1) {
+          j += 5;
+          pH += 22;
+      }
+      pH += 25;
+    }
+
+
+    if (data.position === 'top-left') {
+      x = window.scrollX;
+      y = window.scrollY;
+    } else if (data.position === 'bottom-right') {
+      x = (window.innerWidth - (pW + 10)) + window.scrollX;
+      y = (window.innerHeight - (pH + 10)) + window.scrollY;
+    } else if (data.position === 'avoid') {
+      /*
+       * Pop-up location:
+       *  - immediately below avoid rectangle, left aligned with it
+       *  - immediately below avoid rectangle, to the right edge of viewport
+       *  - immediately above avoid rectangle, left aligned with it
+       *  - immediately above avoid rectangle, to the right edge of viewport
+       *  - top-left of viewport
+       *  - bottom-right of viewport
+       */
+      x = data.avoidLeft;
+      y = data.avoidBottom;
+
+      // go left if necessary
+      if (x + pW + 10 > window.innerWidth) {
+          x = Math.max(0, window.innerWidth - pW - 10);
+      }
+
+      // go up if necessary
+      if (y + pH + 10 > window.innerHeight) {
+        if (pH + 10 < data.avoidTop) {
+          y = data.avoidTop - (pH + 10);
+        } else if (pW + 10 < data.avoidLeft) {
+          x = data.avoidLeft - (pW + 10);
+          y = 0;
+        } else {
+          x = (window.innerWidth - (pW + 10));
+          y = (window.innerHeight - (pH + 10));
+        }
+      }
+
+      x += window.scrollX;
+      y += window.scrollY;
+
+    } else {
+      console.log('Unsupported show-pop-up position: ', data.position);
     }
 
     // (-1, -1) indicates: leave position unchanged
     if (x !== -1 && y !== -1) {
-        popup.style.left = x + 'px';
         popup.style.top = y + 'px';
+        popup.style.left = x + 'px';
         popup.style.display = '';
     }
+  } catch (err) {
+    console.log('topShowPopup failed with: ', err);
+  }
 }
 
 function hidePopup() {
@@ -841,13 +930,9 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     range.setStart(rangeStartNode, rangeStartOffset);
     range.setEnd(selEnd.node, offset);
     let clientRects = range.getClientRects();
+    selLeft = clientRects[0].left;
     selTop = clientRects[0].top;
-    selBotton = clientRects[0].bottom;
-    if (iframe) {
-      let rect = iframe.getBoundingClientRect();
-      selTop += rect.y;
-      selBotton += rect.y;
-    }
+    selBottom = clientRects[0].bottom;
 
     let sel = doc.getSelection();
     if (!sel.isCollapsed && selText !== sel.toString())
@@ -1210,7 +1295,7 @@ let miniHelp = `
 
 // event listener
 // Only listen for messages in the top frame - not in iframes
-if (window.top === window.self) {
+// if (window.top === window.self) {
   chrome.runtime.onMessage.addListener(
       function (request) {
           switch (request.type) {
@@ -1222,15 +1307,17 @@ if (window.top === window.self) {
                   disableTab();
                   break;
               case 'showPopup':
-                  if (!request.isHelp || window === window.top) {
+                  if (window === window.top) {
                       showPopup(request.text);
                   }
                   break;
               case 'showHelp':
-                  showPopup(miniHelp);
+                  if (window === window.top) {
+                      showPopup(miniHelp);
+                  }
                   break;
               default:
           }
       }
   );
-}
+// }
