@@ -866,7 +866,7 @@ function topShowPopup (data) {
        *  - bottom-right of viewport
        */
       x = data.avoidLeft;
-      y = data.avoidBottom;
+      y = data.avoidBottom + 5;
 
       // go left if necessary
       if (x + pW + 10 > window.innerWidth) {
