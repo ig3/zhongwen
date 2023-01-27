@@ -12,8 +12,9 @@ Changes from the original include:
 
 ## Highlights
 - Supports both traditional and simplified characters.
-- Includes a recent version of the widely used 
-  [CEDICT](https://cc-cedict.org/wiki) Chinese English dictionary.
+- Includes the widely used 
+  [CC-CEDICT](https://cc-cedict.org/wiki) Chinese English dictionary
+  updated to 20230126.
 - Displays Hanyu Pinyin along both the simplified and traditional characters,
   however only showing either simplified or traditional characters
   can be configured as an option.
