@@ -5,6 +5,9 @@
 The ig3 Zhongwen Firefox extension is a fork and modification of the
 Zhongwen Chrome extension written by Christian Schiller.
 
+Updates to the dictionary are from:
+[MDGB CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cedict)
+
 
 #### Zhongwen Chrome extension
 
