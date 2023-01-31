@@ -1345,4 +1345,16 @@ let miniHelp = `
           }
       }
   );
+
+  chrome.runtime.sendMessage({
+      'type': 'loaded'
+    },
+    (enabled) => {
+      if (enabled) {
+        enableTab();
+      } else {
+        disableTab();
+      }
+    }
+  );
 // }

@@ -293,6 +293,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
         }
             break;
 
+        case 'loaded': {
+            callback(isEnabled);
+            break;
+        }
+
         case 'open': {
             tabID = tabIDs[request.tabType];
             if (tabID) {
