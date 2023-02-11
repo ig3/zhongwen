@@ -627,16 +627,13 @@ function processSearchResult(result) {
     selStartDelta = (selStartOffset - savedRangeOffset);
 
     let rangeNode = savedRangeNode;
-    // don't try to highlight form elements
-    if (!('form' in savedTarget)) {
-        let doc = rangeNode.ownerDocument;
-        if (!doc) {
-            clearHighlight();
-            hidePopup();
-            return;
-        }
-        highlightMatch(doc, rangeNode, selStartOffset, highlightLength, selEndList);
+    let doc = rangeNode.ownerDocument;
+    if (!doc) {
+        clearHighlight();
+        hidePopup();
+        return;
     }
+    highlightMatch(doc, rangeNode, selStartOffset, highlightLength, selEndList);
 
     showPopup(makeHtml(result, config.tonecolors !== 'no'), savedTarget, popX, popY, false);
 }
@@ -729,7 +726,6 @@ function showPopup(html, elem, x, y, looseWidth) {
         } else if (altView === 2) { // bottom right
             message.position = 'bottom-right';
         } else if (elem instanceof window.HTMLOptionElement) {
-
             x = 0;
             y = 0;
 
@@ -937,6 +933,21 @@ function hidePopup() {
     }
 }
 
+/**
+ * Highlight the text matched by lookup.
+ *
+ * The matched text begins at rangeStartOffset into rangeStartNode and
+ * extends for matchLen characters. This may span multiple nodes.
+ *
+ * selEndList is an array of objects containing nodes that may contain
+ * matched text. The match begins in the node of the first element and
+ * extends until matchLen characters have been spanned.
+ *
+ * If savedTarget is a form element (i.e. has a 'form' attribute) then 
+ * the selection is not set, so the matched text is not highlighted. This
+ * is for historical reasons. The original motivation for avoiding
+ * selecting text in form elements is unknown.
+ */
 function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndList) {
     if (!selEndList || selEndList.length === 0) return;
 
@@ -959,23 +970,26 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     selTop = clientRects[0].top;
     selBottom = clientRects[0].bottom;
 
-    let sel = doc.getSelection();
-    if (!sel.isCollapsed && selText !== sel.toString())
-        return;
-    sel.empty();
-    sel.addRange(range);
-    selText = sel.toString();
-    selDoc = doc;
-    const el = sel.anchorNode.parentElement;
-    if (el) {
-      if (selElement && selElement !== el) {
-        selElement.style.cursor = selElementCursor;
-      }
-      if (selElement !== el) {
-        selElement = el;
-        selElementCursor = selElement.style.cursor;
-        selElement.style.cursor = 'url(' +
-          browser.extension.getURL('images/cursor.png') + ') 32 16, crosshair';
+    // Don't highlight in form elements
+    if (!('form' in savedTarget)) {
+      let sel = doc.getSelection();
+      if (!sel.isCollapsed && selText !== sel.toString())
+          return;
+      sel.empty();
+      sel.addRange(range);
+      selText = sel.toString();
+      selDoc = doc;
+      const el = sel.anchorNode.parentElement;
+      if (el) {
+        if (selElement && selElement !== el) {
+          selElement.style.cursor = selElementCursor;
+        }
+        if (selElement !== el) {
+          selElement = el;
+          selElementCursor = selElement.style.cursor;
+          selElement.style.cursor = 'url(' +
+            browser.extension.getURL('images/cursor.png') + ') 32 16, crosshair';
+        }
       }
     }
 }
