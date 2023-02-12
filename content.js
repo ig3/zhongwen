@@ -56,6 +56,8 @@ let savedRangeNode;
 
 let savedRangeOffset;
 
+let selFrom; // The window from which the current selection was made
+
 let selLeft;
 
 let selTop;
@@ -127,7 +129,6 @@ function disableTab() {
 }
 
 function onKeyDown(keyDown) {
-
     if (keyDown.ctrlKey || keyDown.metaKey) {
         return;
     }
@@ -148,10 +149,6 @@ function onKeyDown(keyDown) {
         return;
     }
 
-    if (!isVisible()) {
-        return;
-    }
-
     switch (keyDown.keyCode) {
 
         case 65: // 'a'
@@ -164,20 +161,7 @@ function onKeyDown(keyDown) {
             break;
 
         case 66: // 'b'
-        {
-            let offset = selStartDelta;
-            for (let i = 0; i < 10; i++) {
-                selStartDelta = --offset;
-                let ret = triggerSearch();
-                if (ret === 0) {
-                    break;
-                } else if (ret === 2) {
-                    savedRangeNode = findPreviousTextNode(savedRangeNode.parentNode, savedRangeNode);
-                    savedRangeOffset = 0;
-                    offset = savedRangeNode.data.length;
-                }
-            }
-        }
+            selectPrevious();
             break;
 
         case 71: // 'g'
@@ -196,21 +180,20 @@ function onKeyDown(keyDown) {
             break;
 
         case 77: // 'm'
-            selStartIncrement = 1;
-        // falls through
+            selectNext({
+              data: {
+                type: 'select-next',
+                byWord: true
+              }
+            });
+            break;
+
         case 78: // 'n'
-            for (let i = 0; i < 10; i++) {
-                selStartDelta += selStartIncrement;
-                let ret = triggerSearch();
-                if (ret === 0) {
-                    break;
-                } else if (ret === 2) {
-                    savedRangeNode = findNextTextNode(savedRangeNode.parentNode, savedRangeNode);
-                    savedRangeOffset = 0;
-                    selStartDelta = 0;
-                    selStartIncrement = 0;
-                }
-            }
+            selectNext({
+              data: {
+                type: 'select-next'
+              }
+            });
             break;
 
         case 82: // 'r'
@@ -353,12 +336,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 53: // '5'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
-
-                // https://www.mdbg.net/chindict/chindict.php?page=worddict&wdrst=0&wdqb=%E6%B0%B4
-                let mdbg = 'https://www.mdbg.net/chindict/chindict.php?page=worddict&wdrst=0&wdqb=' + sel;
+            if (keyDown.altKey && selText) {
+                let mdbg = 'https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=' + encodeURIComponent(selText);
 
                 chrome.runtime.sendMessage({
                     type: 'open',
@@ -712,7 +691,8 @@ function showPopup(html, elem, x, y, looseWidth) {
       type: 'show-pop-up',
       position: 'unchanged',
       looseWidth: looseWidth,
-      html: html
+      html: html,
+      selText: selText
     };
 
     if (!x || !y) {
@@ -759,8 +739,9 @@ function showPopup(html, elem, x, y, looseWidth) {
     }
 
     if (window === window.top) {
-      topShowPopup(message);
+      topShowPopup({ data: message });
     } else {
+      selFrom = window;
       window.parent.postMessage(message, '*');
     }
   } catch (err) {
@@ -776,9 +757,66 @@ function onWindowMessage (event) {
     bubbleShowPopup(event);
   } else if (event.data.type === 'hide-pop-up') {
     bubbleHidePopup(event);
+  } else if (event.data.type === 'select-next') {
+    selectNext(event);
+  } else if (event.data.type === 'select-previous') {
+    selectPrevious(event);
   } else {
     console.log('Unsupported window message: ', event.data.type);
     return;
+  }
+}
+
+function selectPrevious (event) {
+  if (
+    window !== window.top &&
+    (!event || event.source !== window.parent)
+  ) {
+    window.parent.postMessage({ type: 'select-previous' }, '*');
+  } else if ( selFrom !== window) {
+    if (selText) {
+      selFrom.postMessage({ type: 'select-previous' }, '*');
+    }
+  } else {
+    let offset = selStartDelta;
+    for (let i = 0; i < 10; i++) {
+        selStartDelta = --offset;
+        let ret = triggerSearch();
+        if (ret === 0) {
+            break;
+        } else if (ret === 2) {
+            savedRangeNode = findPreviousTextNode(savedRangeNode.parentNode, savedRangeNode);
+            savedRangeOffset = 0;
+            offset = savedRangeNode.data.length;
+        }
+    }
+  }
+}
+
+function selectNext (event) {
+  if (
+    window !== window.top &&
+    (!event || event.source !== window.parent)
+  ) {
+    window.parent.postMessage(event.data, '*');
+  } else if ( selFrom !== window) {
+    if (selText) {
+      selFrom.postMessage(event.data, '*');
+    }
+  } else {
+    if (event.data.byWord) selStartIncrement = 1;
+    for (let i = 0; i < 10; i++) {
+        selStartDelta += selStartIncrement;
+        let ret = triggerSearch();
+        if (ret === 0) {
+            break;
+        } else if (ret === 2) {
+            savedRangeNode = findNextTextNode(savedRangeNode.parentNode, savedRangeNode);
+            savedRangeOffset = 0;
+            selStartDelta = 0;
+            selStartIncrement = 0;
+        }
+    }
   }
 }
 
@@ -812,9 +850,10 @@ function bubbleShowPopup (event) {
   }
 
   if (window === window.top) {
-    topShowPopup(event.data);
+    topShowPopup(event);
   } else {
     // bubble up
+    selFrom = event.source;
     window.parent.postMessage(event.data, '*');
   }
 }
@@ -824,8 +863,11 @@ function bubbleShowPopup (event) {
  *
  * This actually renders and reveals the pop-up
  */
-function topShowPopup (data) {
+function topShowPopup (messageEvent) {
   try {
+    const data = messageEvent.data;
+    selFrom = messageEvent.source || window;
+    selText = data.selText;
     let popup = document.getElementById('zhongwen-window');
     const looseWidth = false; // It seems not used but placeholder, in case...
 
