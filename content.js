@@ -96,6 +96,8 @@ let mouseMoveTimer;
 
 let altView = 0;
 
+let shiftY = 0;
+
 let savedSearchResults = [];
 
 let savedSelStartOffset = 0;
@@ -152,8 +154,12 @@ function onKeyDown(keyDown) {
     switch (keyDown.keyCode) {
 
         case 65: // 'a'
-            altView = (altView + 1) % 3;
-            triggerSearch();
+            setAltView({
+              data: {
+                type: 'set-alt-view',
+                altView: (altView + 1) % 3
+              }
+            });
             break;
 
         case 67: // 'c'
@@ -260,15 +266,23 @@ function onKeyDown(keyDown) {
             break;
 
         case 88: // 'x'
-            altView = 0;
-            popY -= 20;
-            triggerSearch();
+            setAltView({
+              data: {
+                type: 'set-alt-view',
+                altView: 0,
+                shift: -20
+              }
+            });
             break;
 
         case 89: // 'y'
-            altView = 0;
-            popY += 20;
-            triggerSearch();
+            setAltView({
+              data: {
+                type: 'set-alt-view',
+                altView: 0,
+                shift: 20
+              }
+            });
             break;
 
         case 49: // '1'
@@ -761,9 +775,28 @@ function onWindowMessage (event) {
     selectNext(event);
   } else if (event.data.type === 'select-previous') {
     selectPrevious(event);
+  } else if (event.data.type === 'set-alt-view') {
+    setAltView(event);
   } else {
     console.log('Unsupported window message: ', event.data.type);
     return;
+  }
+}
+
+function setAltView (event) {
+  altView = event.data.altView;
+  shiftY += event.data.shift;
+  if (
+    window !== window.top &&
+    (!event || event.source !== window.parent)
+  ) {
+    window.parent.postMessage(event.data, '*');
+  } else if ( selFrom !== window) {
+    if (selText) {
+      selFrom.postMessage(event.data, '*');
+    }
+  } else {
+    triggerSearch();
   }
 }
 
@@ -909,10 +942,10 @@ function topShowPopup (messageEvent) {
     }
 
 
-    if (data.position === 'top-left') {
+    if (altView === 1 || data.position === 'top-left') {
       x = window.scrollX;
       y = window.scrollY;
-    } else if (data.position === 'bottom-right') {
+    } else if (altView === 2 || data.position === 'bottom-right') {
       x = (window.innerWidth - (pW + 10)) + window.scrollX;
       y = (window.innerHeight - (pH + 10)) + window.scrollY;
     } else if (data.position === 'avoid') {
@@ -926,7 +959,7 @@ function topShowPopup (messageEvent) {
        *  - bottom-right of viewport
        */
       x = data.avoidLeft;
-      y = data.avoidBottom + 5;
+      y = data.avoidBottom + 5 + shiftY;
 
       // go left if necessary
       if (x + pW + 10 > window.innerWidth) {
