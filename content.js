@@ -164,7 +164,11 @@ function onKeyDown(keyDown) {
             break;
 
         case 67: // 'c'
-            copyToClipboard(getTextForClipboard());
+            copyToClipboard({
+              data: {
+                type: 'copy-to-clipboard'
+              }
+            });
             break;
 
         case 66: // 'b'
@@ -777,9 +781,31 @@ function onWindowMessage (event) {
     selectPrevious(event);
   } else if (event.data.type === 'set-alt-view') {
     setAltView(event);
+  } else if (event.data.type === 'copy-to-clipboard') {
+    copyToClipboard(event);
   } else {
     console.log('Unsupported window message: ', event.data.type);
     return;
+  }
+}
+
+function copyToClipboard (event) {
+  if (
+    window !== window.top &&
+    (!event || event.source !== window.parent)
+  ) {
+    window.parent.postMessage(event.data, '*');
+  } else if ( selFrom !== window) {
+    if (selText) {
+      selFrom.postMessage(event.data, '*');
+    }
+  } else {
+    chrome.runtime.sendMessage({
+        'type': 'copy',
+        'data': getTextForClipboard()
+    });
+
+    showPopup('Copied to clipboard', null, -1, -1);
   }
 }
 
@@ -1171,15 +1197,6 @@ function findPreviousTextNode(root, previous) {
     } else {
         return findPreviousTextNode(root.parentNode, previous);
     }
-}
-
-function copyToClipboard(data) {
-    chrome.runtime.sendMessage({
-        'type': 'copy',
-        'data': data
-    });
-
-    showPopup('Copied to clipboard', null, -1, -1);
 }
 
 function makeHtml(result, showToneColors) {
