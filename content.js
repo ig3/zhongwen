@@ -256,8 +256,7 @@ function onKeyDown(keyDown) {
 
         case 84: // 't'
             {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+                let sel = encodeURIComponent(selText);
 
                 // https://tatoeba.org/eng/sentences/search?from=cmn&to=eng&query=%E8%BF%9B%E8%A1%8C
                 let tatoeba = 'https://tatoeba.org/eng/sentences/search?from=cmn&to=eng&query=' + sel;
@@ -291,9 +290,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 49: // '1'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // https://dict.naver.com/linedict/zhendict/dict.html#/cnen/search?query=%E4%B8%AD%E6%96%87
                 let linedict = 'https://dict.naver.com/linedict/zhendict/dict.html#/cnen/search?query=' + sel;
@@ -307,9 +305,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 50: // '2'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // https://forvo.com/search/%E4%B8%AD%E6%96%87/zh/
                 var forvo = 'https://forvo.com/search/' + sel + '/zh/';
@@ -323,9 +320,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 51: // '3'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // https://dict.cn/%E7%BF%BB%E8%AF%91
                 let dictcn = 'https://dict.cn/' + sel;
@@ -339,9 +335,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 52: // '4'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // https://www.iciba.com/%E4%B8%AD%E9%A4%90
                 let iciba = 'https://www.iciba.com/' + sel;
@@ -367,9 +362,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 54: // '6'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // http://jukuu.com/show-%E8%AF%8D%E5%85%B8-0.html
                 // https returns 403 errors
@@ -384,9 +378,8 @@ function onKeyDown(keyDown) {
             break;
 
         case 55: // '7'
-            if (keyDown.altKey) {
-                let sel = encodeURIComponent(
-                    window.getSelection().toString());
+            if (keyDown.altKey && selText) {
+                let sel = encodeURIComponent(selText);
 
                 // https://www.moedict.tw/~%E4%B8%AD%E6%96%87
                 let moedict = 'https://www.moedict.tw/~' + sel;
