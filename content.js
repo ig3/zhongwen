@@ -157,7 +157,8 @@ function onKeyDown(keyDown) {
             setAltView({
               data: {
                 type: 'set-alt-view',
-                altView: (altView + 1) % 3
+                altView: (altView + 1) % 3,
+                shift: 0
               }
             });
             break;
@@ -595,7 +596,6 @@ function triggerSearch() {
 }
 
 function processSearchResult(result) {
-
     let selStartOffset = savedSelStartOffset;
     let selEndList = savedSelEndList;
 
@@ -785,7 +785,7 @@ function onWindowMessage (event) {
 
 function setAltView (event) {
   altView = event.data.altView;
-  shiftY += event.data.shift;
+  shiftY += event.data.shift || 0;
   if (
     window !== window.top &&
     (!event || event.source !== window.parent)
@@ -919,7 +919,7 @@ function topShowPopup (messageEvent) {
     $(popup).html(data.html);
     popup.style.top = '-1000px';
     popup.style.left = '0px';
-    popup.style.display = ''; // Neet it displayed so dimensions are correct
+    popup.style.display = ''; // Need it displayed so dimensions are correct
 
     let x = -1;
     let y = -1;
@@ -940,7 +940,6 @@ function topShowPopup (messageEvent) {
       }
       pH += 25;
     }
-
 
     if (altView === 1 || data.position === 'top-left') {
       x = window.scrollX;
