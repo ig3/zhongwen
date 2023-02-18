@@ -467,8 +467,10 @@ function processMouseMove(mouseMove) {
     }
 
     if (
-      rangeNode &&
-      rangeNode.parentNode === mouseMove.target && (
+      rangeNode && (
+        rangeNode.nodeName !== '#text' ||
+        rangeNode.parentNode === mouseMove.target 
+      ) && (
         rangeNode !== savedRangeNode ||
         rangeOffset !== savedRangeOffset
       ) && (
@@ -494,12 +496,9 @@ function processMouseMove(mouseMove) {
       selStartDelta = 0;
       selStartIncrement = 1;
 
-      // Only #text nodes have a data attribute
-      if (rangeNode.data && rangeOffset < rangeNode.data.length) {
-          popX = mouseMove.clientX;
-          popY = mouseMove.clientY;
-          timer = setTimeout(() => triggerSearch(), 50);
-      }
+      popX = mouseMove.clientX;
+      popY = mouseMove.clientY;
+      timer = setTimeout(() => triggerSearch(), 50);
     } else if (
       mouseMove.target !== savedTarget ||
       rangeNode !== savedRangeNode ||
@@ -516,9 +515,16 @@ function processMouseMove(mouseMove) {
 }
 
 function triggerSearch() {
-
     let rangeNode = savedRangeNode;
     let selStartOffset = savedRangeOffset + selStartDelta;
+
+    const nodeText =
+      rangeNode.nodeName === '#text' ?
+        rangeNode.data :
+        (
+          rangeNode.nodeName === 'TEXTAREA' ||
+          rangeNode.nodeName === 'INPUT'
+        ) ? rangeNode.value : '';
 
     selStartIncrement = 1;
 
@@ -528,13 +534,13 @@ function triggerSearch() {
         return 1;
     }
 
-    if (selStartOffset < 0 || rangeNode.data.length <= selStartOffset) {
+    if (selStartOffset < 0 || nodeText.length <= selStartOffset) {
         clearHighlight();
         hidePopup();
         return 2;
     }
 
-    let u = rangeNode.data.charCodeAt(selStartOffset);
+    let u = nodeText.charCodeAt(selStartOffset);
 
     // not a Chinese character
     if (isNaN(u) ||
@@ -572,6 +578,8 @@ function processSearchResult(result) {
     let selStartOffset = savedSelStartOffset;
     let selEndList = savedSelEndList;
 
+  try {
+
     if (!result) {
         hidePopup();
         clearHighlight();
@@ -602,6 +610,9 @@ function processSearchResult(result) {
     highlightMatch(doc, rangeNode, selStartOffset, highlightLength, selEndList);
 
     showPopup(makeHtml(result, config.tonecolors !== 'no'), savedTarget, popX, popY, false);
+  } catch(err) {
+    console.log('processMatch failed with: ', err);
+  }
 }
 
 // modifies selEndList as a side-effect
@@ -609,20 +620,30 @@ function getText(startNode, offset, selEndList, maxLength) {
     let text = '';
     let endIndex;
 
-    if (startNode.nodeType !== Node.TEXT_NODE) {
-        return '';
-    }
+    if (startNode.nodeName === '#text') {
+      endIndex = Math.min(startNode.data.length, offset + maxLength);
+      text += startNode.data.substring(offset, endIndex);
+      selEndList.push({
+          node: startNode,
+          offset: endIndex
+      });
 
-    endIndex = Math.min(startNode.data.length, offset + maxLength);
-    text += startNode.data.substring(offset, endIndex);
-    selEndList.push({
+      let nextNode = startNode;
+      while ((text.length < maxLength) && ((nextNode = findNextTextNode(nextNode.parentNode, nextNode)) !== null)) {
+          text += getTextFromSingleNode(nextNode, selEndList, maxLength - text.length);
+      }
+    } else if (
+      startNode.nodeName === 'INPUT' ||
+      startNode.nodeName === 'TEXTAREA'
+    ) {
+      endIndex = Math.min(startNode.value.length, offset + maxLength);
+      text += startNode.value.substring(offset, endIndex);
+      selEndList.push({
         node: startNode,
         offset: endIndex
-    });
-
-    let nextNode = startNode;
-    while ((text.length < maxLength) && ((nextNode = findNextTextNode(nextNode.parentNode, nextNode)) !== null)) {
-        text += getTextFromSingleNode(nextNode, selEndList, maxLength - text.length);
+      });
+    } else {
+      console.log('Unsupported nodeType: ', startNode);
     }
 
     return text;
@@ -1018,6 +1039,7 @@ function hidePopup() {
  * selecting text in form elements is unknown.
  */
 function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndList) {
+  if (rangeStartNode.nodeName === '#text') {
     if (!selEndList || selEndList.length === 0) return;
 
     let selEnd;
@@ -1061,6 +1083,24 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
         }
       }
     }
+  } else if (
+    rangeStartNode.nodeName === 'INPUT' ||
+    rangeStartNode.nodeName === 'TEXTAREA'
+  ) {
+    // TODO: determine the position of the matched text within the input
+    // rather than the position of the entire input element.
+    const clientRects = rangeStartNode.getClientRects();
+    selLeft = clientRects[0].left;
+    selTop = clientRects[0].top;
+    selBottom = clientRects[0].bottom;
+    selDoc = doc;
+    rangeStartNode.setSelectionRange(
+      rangeStartOffset,
+      rangeStartOffset + matchLen
+    );
+  } else {
+    console.log("Don't highlight " + rangeStartNode.nodeName);
+  }
 }
 
 /**
