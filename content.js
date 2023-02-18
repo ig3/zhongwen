@@ -82,8 +82,6 @@ let selStartIncrement;
 
 let observer;
 
-let ownerDocument;
-
 let popX = 0;
 
 let popY = 0;
@@ -419,120 +417,98 @@ function deferMouseMoveProcessing (delay) {
 
 function processMouseMove(mouseMove) {
   try {
-    ownerDocument = mouseMove.target.ownerDocument;
 
+    // Ignore mouse moves over the zhongwen pop-up
     const div = document.getElementById('zhongwen-window');
     if (div && div.matches(":hover")) {
       return;
     }
 
-    // TODO: is located appropriately? It looks out of place.
+    // Ignore consecutive mouse events for same coordinates
+    // This is a tiny optimization. The vast majority of mouse move events
+    // will be with different coordinates.
     if (
-      mouseMove.target.nodeName === 'TEXTAREA' ||
-      mouseMove.target.nodeName === 'INPUT' ||
-      mouseMove.target.nodeName === 'DIV'
+      clientX && clientY &&
+      mouseMove.clientX === clientX &&
+      mouseMove.clientY === clientY
     ) {
-
-        let div = document.getElementById('zhongwenDiv');
-
-        if (mouseMove.altKey) {
-
-            if (
-              !div && (
-                mouseMove.target.nodeName === 'TEXTAREA' ||
-                mouseMove.target.nodeName === 'INPUT'
-              )
-            ) {
-
-                div = makeDiv(mouseMove.target);
-                document.body.appendChild(div);
-                div.scrollTop = mouseMove.target.scrollTop;
-                div.scrollLeft = mouseMove.target.scrollLeft;
-            }
-        } else {
-            if (div) {
-                document.body.removeChild(div);
-            }
-        }
-    }
-
-    if (clientX && clientY) {
-        if (mouseMove.clientX === clientX && mouseMove.clientY === clientY) {
-            return;
-        }
+      return;
     }
     clientX = mouseMove.clientX;
     clientY = mouseMove.clientY;
 
-    let range;
     let rangeNode;
     let rangeOffset;
 
     // Handle Chrome and Firefox
     // caretRangeFromPoint is a non-standard function supported by all
     // browsers except Firefox.
+    const ownerDocument = mouseMove.target.ownerDocument;
     if (ownerDocument.caretRangeFromPoint) {
-        range = ownerDocument.caretRangeFromPoint(mouseMove.clientX, mouseMove.clientY);
-        if (range === null) {
-            clearHighlight();
-            hidePopup();
-            return;
+        const range =
+          ownerDocument.caretRangeFromPoint(
+            mouseMove.clientX,
+            mouseMove.clientY
+          );
+        if (range) {
+          rangeNode = range.startContainer;
+          rangeOffset = range.startOffset;
         }
-        rangeNode = range.startContainer;
-        rangeOffset = range.startOffset;
     } else if (ownerDocument.caretPositionFromPoint) {
-        range = ownerDocument.caretPositionFromPoint(mouseMove.clientX, mouseMove.clientY);
-        if (range === null) {
-            clearHighlight();
-            hidePopup();
-            return;
-        }
-        rangeNode = range.offsetNode;
-        rangeOffset = range.offset;
-    }
-
-    if (mouseMove.target === savedTarget) {
-        if (rangeNode === savedRangeNode && rangeOffset === savedRangeOffset) {
-            return;
+        const range =
+          ownerDocument.caretPositionFromPoint(
+            mouseMove.clientX,
+            mouseMove.clientY
+          );
+        if (range) {
+          rangeNode = range.offsetNode;
+          rangeOffset = range.offset;
         }
     }
 
-    if (timer) {
-        clearTimeout(timer);
-        timer = null;
-    }
+    if (
+      rangeNode &&
+      rangeNode.parentNode === mouseMove.target && (
+        rangeNode !== savedRangeNode ||
+        rangeOffset !== savedRangeOffset
+      ) && (
+        rangeNode.nodeName === '#text' ||
+        rangeNode.nodeName === 'TEXTAREA' ||
+        rangeNode.nodeName === 'INPUT'
+      )
+    ) {
+      if (timer) {
+          clearTimeout(timer);
+          timer = null;
+      }
 
-    if (rangeNode.data && rangeOffset === rangeNode.data.length) {
-        rangeNode = findNextTextNode(rangeNode.parentNode, rangeNode);
-        rangeOffset = 0;
-    }
+      if (rangeNode.data && rangeOffset === rangeNode.data.length) {
+          rangeNode = findNextTextNode(rangeNode.parentNode, rangeNode);
+          rangeOffset = 0;
+      }
 
-    if (!rangeNode || rangeNode.parentNode !== mouseMove.target) {
-        rangeNode = null;
-        rangeOffset = -1;
-    }
+      savedTarget = mouseMove.target;
+      savedRangeNode = rangeNode;
+      savedRangeOffset = rangeOffset;
 
-    savedTarget = mouseMove.target;
-    savedRangeNode = rangeNode;
-    savedRangeOffset = rangeOffset;
+      selStartDelta = 0;
+      selStartIncrement = 1;
 
-    selStartDelta = 0;
-    selStartIncrement = 1;
-
-    if (rangeNode && rangeNode.data && rangeOffset < rangeNode.data.length) {
-        popX = mouseMove.clientX;
-        popY = mouseMove.clientY;
-        timer = setTimeout(() => triggerSearch(), 50);
-        return;
-    }
-
-    // Don't close just because we moved from a valid pop-up slightly over to a place with nothing.
-    let dx = popX - mouseMove.clientX;
-    let dy = popY - mouseMove.clientY;
-    let distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance > 4) {
-        clearHighlight();
-        hidePopup();
+      // Only #text nodes have a data attribute
+      if (rangeNode.data && rangeOffset < rangeNode.data.length) {
+          popX = mouseMove.clientX;
+          popY = mouseMove.clientY;
+          timer = setTimeout(() => triggerSearch(), 50);
+      }
+    } else if (
+      mouseMove.target !== savedTarget ||
+      rangeNode !== savedRangeNode ||
+      rangeOffset !== savedRangeOffset
+    ) {
+      clearHighlight();
+      hidePopup();
+      savedRangeNode = null;
+      savedRangeOffset = null;
     }
   } catch (err) {
     console.log('processMouseMove failed with: ', err);
@@ -1123,32 +1099,6 @@ function getTextForClipboard() {
         result += '\n';
     }
     return result;
-}
-
-function makeDiv(input) {
-    let div = document.createElement('div');
-
-    div.id = 'zhongwenDiv';
-
-    let text;
-    if (input.value) {
-        text = input.value;
-    } else {
-        text = '';
-    }
-    div.innerText = text;
-
-    div.style.cssText = window.getComputedStyle(input, '').cssText;
-    div.scrollTop = input.scrollTop;
-    div.scrollLeft = input.scrollLeft;
-    div.style.position = 'absolute';
-    div.style.zIndex = 7000;
-    $(div).offset({
-        top: $(input).offset().top,
-        left: $(input).offset().left
-    });
-
-    return div;
 }
 
 function findNextTextNode(root, previous) {
