@@ -467,16 +467,13 @@ function processMouseMove(mouseMove) {
     }
 
     if (
-      rangeNode && (
-        rangeNode.nodeName !== '#text' ||
-        rangeNode.parentNode === mouseMove.target 
+      rangeNode && 
+      rangeNode.nodeName.match(/^(#text|TEXTAREA|INPUT)$/) && (
+        rangeOffset !== savedRangeOffset ||
+        rangeNode !== savedRangeNode
       ) && (
-        rangeNode !== savedRangeNode ||
-        rangeOffset !== savedRangeOffset
-      ) && (
-        rangeNode.nodeName === '#text' ||
-        rangeNode.nodeName === 'TEXTAREA' ||
-        rangeNode.nodeName === 'INPUT'
+        rangeNode.parentNode === mouseMove.target ||
+        rangeNode.nodeName !== '#text'
       )
     ) {
       if (timer) {
@@ -500,9 +497,9 @@ function processMouseMove(mouseMove) {
       popY = mouseMove.clientY;
       timer = setTimeout(() => triggerSearch(), 50);
     } else if (
-      mouseMove.target !== savedTarget ||
+      rangeOffset !== savedRangeOffset ||
       rangeNode !== savedRangeNode ||
-      rangeOffset !== savedRangeOffset
+      mouseMove.target !== savedTarget
     ) {
       clearHighlight();
       hidePopup();
