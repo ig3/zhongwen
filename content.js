@@ -50,6 +50,8 @@
 
 let config;
 
+let enableKeyboardShortcuts = false;
+
 let savedTarget;
 
 let savedRangeNode;
@@ -129,6 +131,15 @@ function disableTab() {
 }
 
 function onKeyDown(keyDown) {
+  if (
+    keyDown.ctrlKey &&
+    keyDown.altKey &&
+    keyDown.keyCode === 75 // 'k'
+  ) {
+    enableKeyboardShortcuts = !enableKeyboardShortcuts;
+  }
+
+  if (enableKeyboardShortcuts) {
     if (keyDown.ctrlKey || keyDown.metaKey) {
         return;
     }
@@ -393,6 +404,7 @@ function onKeyDown(keyDown) {
         default:
             return;
     }
+  }
 }
 
 // Rate limit processing of mouse move events
@@ -437,34 +449,7 @@ function processMouseMove(mouseMove) {
     clientX = mouseMove.clientX;
     clientY = mouseMove.clientY;
 
-    let rangeNode;
-    let rangeOffset;
-
-    // Handle Chrome and Firefox
-    // caretRangeFromPoint is a non-standard function supported by all
-    // browsers except Firefox.
-    const ownerDocument = mouseMove.target.ownerDocument;
-    if (ownerDocument.caretRangeFromPoint) {
-        const range =
-          ownerDocument.caretRangeFromPoint(
-            mouseMove.clientX,
-            mouseMove.clientY
-          );
-        if (range) {
-          rangeNode = range.startContainer;
-          rangeOffset = range.startOffset;
-        }
-    } else if (ownerDocument.caretPositionFromPoint) {
-        const range =
-          ownerDocument.caretPositionFromPoint(
-            mouseMove.clientX,
-            mouseMove.clientY
-          );
-        if (range) {
-          rangeNode = range.offsetNode;
-          rangeOffset = range.offset;
-        }
-    }
+    let {rangeNode, rangeOffset} = getRangeDetails(mouseMove);
 
     if (
       rangeNode && 
@@ -500,11 +485,46 @@ function processMouseMove(mouseMove) {
     ) {
       clearHighlight();
       hidePopup();
+      savedTarget = null;
       savedRangeNode = null;
       savedRangeOffset = null;
     }
   } catch (err) {
     console.log('processMouseMove failed with: ', err);
+  }
+}
+
+// Get the node and offset of the range at the mouse position
+function getRangeDetails (mouseMove) {
+  const ownerDocument = mouseMove.target.ownerDocument;
+  if (ownerDocument.caretPositionFromPoint) {
+    // caretPositionFromPoint is standard but only supported by Firefox
+      const range =
+        ownerDocument.caretPositionFromPoint(
+          mouseMove.clientX,
+          mouseMove.clientY
+        );
+      if (range) {
+        return {
+          rangeNode: range.offsetNode,
+          rangeOffset: range.offset
+        };
+      }
+  } else if (ownerDocument.caretRangeFromPoint) {
+    // caretRangeFromPoint is supported by all browsers except Firefox
+      const range =
+        ownerDocument.caretRangeFromPoint(
+          mouseMove.clientX,
+          mouseMove.clientY
+        );
+      if (range) {
+        return {
+          rangeNode: range.startContainer,
+          rangeOffset: range.startOffset
+        };
+      }
+  } else {
+    return {};
   }
 }
 
@@ -1369,6 +1389,7 @@ let miniHelp = `
     <span style="font-weight: bold;">Zhongwen Chinese-English Dictionary</span><br><br>
     <p>Keyboard shortcuts:<p>
     <table style="margin: 10px;" cellspacing=5 cellpadding=5>
+    <tr><td><b>Ctrl + Alt + k&nbsp;:</b></td><td>&nbsp;Toggle keyboard shortcuts on/off</td></tr>
     <tr><td><b>n&nbsp;:</b></td><td>&nbsp;Next word</td></tr>
     <tr><td><b>b&nbsp;:</b></td><td>&nbsp;Previous character</td></tr>
     <tr><td><b>m&nbsp;:</b></td><td>&nbsp;Next character</td></tr>
@@ -1385,9 +1406,7 @@ let miniHelp = `
     <tr><td><b>&nbsp;</b></td><td>&nbsp;</td></tr>
     <tr><td><b>s&nbsp;:</b></td><td>&nbsp;Add word to Skritter queue</td></tr>
     <tr><td><b>&nbsp;</b></td><td>&nbsp;</td></tr>
-    </table>
-    Look up selected text in online resources:
-    <table style="margin: 10px;" cellspacing=5 cellpadding=5>
+    <tr><td colspan="2">Look up selected text in online resources:</td></tr>
     <tr><td><b>&nbsp;</b></td><td>&nbsp;</td></tr>
     <tr><td><b>Alt + 1 :</b></td><td>&nbsp;LINE Dict</td></tr>
     <tr><td><b>Alt + 2 :</b></td><td>&nbsp;Forvo</td></tr>
