@@ -476,11 +476,6 @@ function processMouseMove(mouseMove) {
         rangeNode.nodeName !== '#text'
       )
     ) {
-      if (timer) {
-          clearTimeout(timer);
-          timer = null;
-      }
-
       if (rangeNode.data && rangeOffset === rangeNode.data.length) {
           rangeNode = findNextTextNode(rangeNode.parentNode, rangeNode);
           rangeOffset = 0;
@@ -495,6 +490,8 @@ function processMouseMove(mouseMove) {
 
       popX = mouseMove.clientX;
       popY = mouseMove.clientY;
+
+      if (timer) clearTimeout(timer);
       timer = setTimeout(() => triggerSearch(), 50);
     } else if (
       rangeOffset !== savedRangeOffset ||
