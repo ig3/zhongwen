@@ -14,7 +14,7 @@ Changes from the original include:
 - Supports both traditional and simplified characters.
 - Includes the widely used 
   [CC-CEDICT](https://cc-cedict.org/wiki) Chinese English dictionary
-  updated to 20230126.
+  updated to 20230225.
 - Displays Hanyu Pinyin along both the simplified and traditional characters,
   however only showing either simplified or traditional characters
   can be configured as an option.
@@ -194,6 +194,35 @@ of its behavior. In order to get there just right-click on the Zhongwen logo
 in the upper right-hand corner of the browser and choose "Options". A new tab
 will open showing you all the available options with a brief explanation of
 each one.
+
+## Development
+
+To build the add-on:
+
+```
+$ git clone git@github.com:ig3/zhongwen.git
+$ cd zhongwen
+$ npm install
+$ npm run build
+```
+
+This will produce a zip file in web-ext-artifacts, ending with the version
+of the add-on. This can be uploaded to Mozilla for signing or installed to
+Firefox add-on manager, Install Add-on from file...
+
+### Updating the dictionary
+
+Download the current dictionary from
+[MDBG](https://www.mdbg.net/chinese/dictionary?page=cc-cedict).
+
+Extract the dictionary data from the downloaded zip/gz file, overwriting
+`data/cedict_ts.u8`.
+
+Rebuild the index:
+
+```
+npm run reindex
+```
 
 
 ## Legal
