@@ -212,18 +212,9 @@ Firefox add-on manager, Install Add-on from file...
 
 ### Updating the dictionary
 
-Download the current dictionary from
-[MDBG](https://www.mdbg.net/chinese/dictionary?page=cc-cedict).
-
-Extract the dictionary data from the downloaded zip/gz file, overwriting
-`data/cedict_ts.u8`.
-
-Rebuild the index:
-
 ```
-npm run reindex
+$ npm run update-cedict
 ```
-
 
 ## Legal
 This program is free software;
