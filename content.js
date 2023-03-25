@@ -960,7 +960,6 @@ function topShowPopup (messageEvent) {
     let pW = popup.offsetWidth;
     let pH = popup.offsetHeight;
 
-
     if (pW <= 0) {
         pW = 200;
     }
@@ -978,8 +977,8 @@ function topShowPopup (messageEvent) {
       x = window.scrollX;
       y = window.scrollY;
     } else if (altView === 2 || data.position === 'bottom-right') {
-      x = (window.innerWidth - (pW + 10)) + window.scrollX;
-      y = (window.innerHeight - (pH + 10)) + window.scrollY;
+      x = (window.innerWidth - (pW + 20)) + window.scrollX;
+      y = (window.innerHeight - (pH + 20)) + window.scrollY;
     } else if (data.position === 'avoid') {
       /*
        * pop-up location:
@@ -990,16 +989,16 @@ function topShowPopup (messageEvent) {
        *  Bottom Right
        */
       x = Math.min(
-        window.innerWidth - (pW + 10),
+        window.innerWidth - (pW + 20),
         data.avoidRects[0].left
       );
       y = data.avoidRects[0].bottom + 5;
       for (let i = 0; i < data.avoidRects.length; i++) {
         const rect = data.avoidRects[i];
         if (
-          rect.left < x + pW + 5 &&
+          rect.left < x + pW + 20 &&
           rect.right > x - 5 &&
-          rect.top < y + pH + 5 &&
+          rect.top < y + pH + 20 &&
           rect.bottom > y - 5
         ) {
           if (rect.bottom + pH + 10 < window.innerHeight) {
@@ -1014,16 +1013,16 @@ function topShowPopup (messageEvent) {
         y + pH + 5 > window.innerHeight
       ) {
         x = Math.min(
-          window.innerWidth - (pW + 10),
+          window.innerWidth - (pW + 20),
           data.avoidRects[0].left
         );
         y = data.avoidRects[0].top - (pH + 5);
         for (let i = 0; i < data.avoidRects.length; i++) {
           const rect = data.avoidRects[i];
           if (
-            rect.left < x + pW + 5 &&
+            rect.left < x + pW + 20 &&
             rect.right > x - 5 &&
-            rect.top < y + pH + 5 &&
+            rect.top < y + pH + 20 &&
             rect.bottom > y - 5
           ) {
             if (rect.top - (pH + 10)  > 0) {
@@ -1048,9 +1047,9 @@ function topShowPopup (messageEvent) {
           for (let i = 0; i < data.avoidRects.length; i++) {
             const rect = data.avoidRects[i];
             if (
-              rect.left < x + pW + 5 &&
+              rect.left < x + pW + 20 &&
               rect.right > x - 5 &&
-              rect.top < y + pH + 5 &&
+              rect.top < y + pH + 20 &&
               rect.bottom > y - 5
             ) {
               x = window.innerWidth - (pW + 5);
@@ -1059,15 +1058,17 @@ function topShowPopup (messageEvent) {
           }
         }
       }
+      x += window.scrollX;
+      y += window.scrollY;
     } else {
       console.log('Unsupported show-pop-up position: ', data.position);
     }
 
     // (-1, -1) indicates: leave position unchanged
     if (x !== -1 && y !== -1) {
-        popup.style.top = y + 'px';
-        popup.style.left = x + 'px';
-        popup.style.display = '';
+      popup.style.top = y + 'px';
+      popup.style.left = x + 'px';
+      popup.style.display = '';
     }
   } catch (err) {
     console.log('topShowPopup failed with: ', err);
