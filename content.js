@@ -60,12 +60,6 @@ let savedRangeOffset;
 
 let selFrom; // The window from which the current selection was made
 
-let selLeft;
-
-let selTop;
-
-let selBottom;
-
 let selText;
 
 let selDoc;
@@ -73,6 +67,8 @@ let selDoc;
 let selElement;
 
 let selElementCursor;
+
+let selRects;
 
 let clientX;
 
@@ -745,16 +741,17 @@ function showPopup(html, elem, x, y, looseWidth) {
             x += elem.parentNode.offsetWidth + 5;
 
             message.position = 'avoid';
-            message.avoidLeft = x;
-            message.avoidTop = y;
-            message.avoidBottom = y + elem.parentNode.clientHeight;
+            message.avoidRects = [{
+              top: y,
+              bottom: y + elem.parentNode.clientHeight,
+              left: x,
+              right: x + elem.parentNode.clientWidth
+            }];
         } else {
             // x += window.scrollX;
             // y += window.scrollY;
             message.position = 'avoid';
-            message.avoidLeft = selLeft;
-            message.avoidTop = selTop;
-            message.avoidBottom = selBottom;
+            message.avoidRects = selRects;
         }
     } else {
         message.position = 'top-left';
@@ -906,9 +903,15 @@ function bubbleShowPopup (event) {
     for (const iframe of iframes) {
       if (iframe.contentWindow !== event.source) continue;
       const { x, y } = iframe.getBoundingClientRect();
-      event.data.avoidLeft += x;
-      event.data.avoidTop += y;
-      event.data.avoidBottom += y;
+      if (event.data.avoidRects) {
+        for (let i = 0; i < event.data.avoidRects.length; i++) {
+          const rect = event.data.avoidRects[i];
+          rect.top += y;
+          rect.bottom += y;
+          rect.left += x;
+          rect.right += x;
+        }
+      }
     }
   }
 
@@ -979,38 +982,83 @@ function topShowPopup (messageEvent) {
       y = (window.innerHeight - (pH + 10)) + window.scrollY;
     } else if (data.position === 'avoid') {
       /*
-       * Pop-up location:
-       *  - immediately below avoid rectangle, left aligned with it
-       *  - immediately below avoid rectangle, to the right edge of viewport
-       *  - immediately above avoid rectangle, left aligned with it
-       *  - immediately above avoid rectangle, to the right edge of viewport
-       *  - top-left of viewport
-       *  - bottom-right of viewport
+       * pop-up location:
+       *  Below, if it fits below without overlap with any avoidRect
+       *  Above, if it fits above without overlap with any avoidRect
+       *  Top left
+       *  Right
+       *  Bottom Right
        */
-      x = data.avoidLeft;
-      y = data.avoidBottom + 5 + shiftY;
-
-      // go left if necessary
-      if (x + pW + 10 > window.innerWidth) {
-          x = Math.max(0, window.innerWidth - pW - 10);
-      }
-
-      // go up if necessary
-      if (y + pH + 10 > window.innerHeight) {
-        if (pH + 10 < data.avoidTop) {
-          y = data.avoidTop - (pH + 10);
-        } else if (pW + 10 < data.avoidLeft) {
-          x = data.avoidLeft - (pW + 10);
-          y = 0;
-        } else {
-          x = (window.innerWidth - (pW + 10));
-          y = (window.innerHeight - (pH + 10));
+      x = Math.min(
+        window.innerWidth - (pW + 10),
+        data.avoidRects[0].left
+      );
+      y = data.avoidRects[0].bottom + 5;
+      for (let i = 0; i < data.avoidRects.length; i++) {
+        const rect = data.avoidRects[i];
+        if (
+          rect.left < x + pW + 5 &&
+          rect.right > x - 5 &&
+          rect.top < y + pH + 5 &&
+          rect.bottom > y - 5
+        ) {
+          if (rect.bottom + pH + 10 < window.innerHeight) {
+            y = rect.bottom + 5 + shiftY;
+          } else {
+            x = rect.right + 5;
+          }
         }
       }
-
-      x += window.scrollX;
-      y += window.scrollY;
-
+      if (
+        x + pW + 5 > window.innerWidth ||
+        y + pH + 5 > window.innerHeight
+      ) {
+        x = Math.min(
+          window.innerWidth - (pW + 10),
+          data.avoidRects[0].left
+        );
+        y = data.avoidRects[0].top - (pH + 5);
+        for (let i = 0; i < data.avoidRects.length; i++) {
+          const rect = data.avoidRects[i];
+          if (
+            rect.left < x + pW + 5 &&
+            rect.right > x - 5 &&
+            rect.top < y + pH + 5 &&
+            rect.bottom > y - 5
+          ) {
+            if (rect.top - (pH + 10)  > 0) {
+              y = rect.top - (pH + 5);
+            } else {
+              x = rect.left - (pW + 5);
+            }
+          }
+        }
+        if (
+          x < 0 ||
+          y < 0
+        ) {
+          x = Math.min(
+            window.innerWidth - (pW + 5),
+            data.avoidRects[0].right + 5
+          );
+          y = Math.min(
+            window.innerHeight - (pH + 5),
+            data.avoidRects[0].top
+          );
+          for (let i = 0; i < data.avoidRects.length; i++) {
+            const rect = data.avoidRects[i];
+            if (
+              rect.left < x + pW + 5 &&
+              rect.right > x - 5 &&
+              rect.top < y + pH + 5 &&
+              rect.bottom > y - 5
+            ) {
+              x = window.innerWidth - (pW + 5);
+              y = window.innerHeight - (pH + 5);
+            }
+          }
+        }
+      }
     } else {
       console.log('Unsupported show-pop-up position: ', data.position);
     }
@@ -1070,10 +1118,7 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
     let range = doc.createRange();
     range.setStart(rangeStartNode, rangeStartOffset);
     range.setEnd(selEnd.node, offset);
-    let clientRects = range.getClientRects();
-    selLeft = clientRects[0].left;
-    selTop = clientRects[0].top;
-    selBottom = clientRects[0].bottom;
+    selRects = makeRectsArray(range.getClientRects());
 
     // Don't highlight in form elements
     if (!('form' in savedTarget)) {
@@ -1103,10 +1148,7 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
   ) {
     // TODO: determine the position of the matched text within the input
     // rather than the position of the entire input element.
-    const clientRects = rangeStartNode.getClientRects();
-    selLeft = clientRects[0].left;
-    selTop = clientRects[0].top;
-    selBottom = clientRects[0].bottom;
+    selRects = makeRectsArray(rangeStartNode.getClientRects());
     selDoc = doc;
     rangeStartNode.setSelectionRange(
       rangeStartOffset,
@@ -1115,6 +1157,24 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
   } else {
     console.log("Don't highlight " + rangeStartNode.nodeName);
   }
+}
+
+/**
+ * makeRectsArray returns an array or rectangles from a client rectangles
+ * object which is array like but not an array and not clonable.
+ */
+function makeRectsArray (rects) {
+  const array = [];
+  for (let i = 0; i < rects.length; i++) {
+    const rect = rects[i];
+    array.push({
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right
+    });
+  }
+  return array;
 }
 
 /**
