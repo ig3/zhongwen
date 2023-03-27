@@ -41,7 +41,7 @@ Changes from the original include:
 Available as an
 [add-on](https://addons.mozilla.org/en-US/firefox/addon/ig3-zhongwen/)
 
-Or, from the source:
+#### From the source
 
 ```
 $ git clone https://github.com/ig3/zhongwen
@@ -55,7 +55,14 @@ This will produce a zip file in the web-ext-artifacts directory.
 In firefox, Add-ons Manager, load this file via 'Install add-on from File'.
 
 
+### Chromium based browsers
+
+Version 1.0.8 of the extension works in Chromium 111.0.5563.64 on Debian
+Linux, installed in developer mode by 'Load unpacked', from a clone of the
+GitHub repository.
+
 ## How Does It Work?
+
 Once Zhongwen is installed on your computer you'll see a little icon showing
 the Zhongwen logo near the upper right-hand corner of your browser. By
 clicking on this icon you can turn the extension on and off. Click on it and
