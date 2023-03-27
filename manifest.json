@@ -27,6 +27,8 @@
       "matches": [
         "<all_urls>"
       ],
+      "match_origin_as_fallback": true,
+      "match_about_blank": true,
       "js": [
         "js/jquery-3.3.1.min.js",
         "js/zhuyin.js",

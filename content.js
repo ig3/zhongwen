@@ -1139,7 +1139,8 @@ function highlightMatch(doc, rangeStartNode, rangeStartOffset, matchLen, selEndL
           selElement = el;
           selElementCursor = selElement.style.cursor;
           selElement.style.cursor = 'url(' +
-            browser.extension.getURL('images/cursor.png') + ') 32 16, crosshair';
+            chrome.runtime.getURL('images/cursor.png') +
+            ') 32 16, crosshair';
         }
       }
     }
