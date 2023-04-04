@@ -427,8 +427,7 @@ function processMouseMove(mouseMove) {
   try {
 
     // Ignore mouse moves over the zhongwen pop-up
-    const div = document.getElementById('zhongwen-window');
-    if (div && div.matches(":hover")) {
+    if (mouseMove.target.id === 'zhongwen-window') {
       return;
     }
 
