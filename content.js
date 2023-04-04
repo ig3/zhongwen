@@ -988,11 +988,15 @@ function topShowPopup (messageEvent) {
        *  Right
        *  Bottom Right
        */
+      // Try below, left aligned with start of selection
       x = Math.min(
         window.innerWidth - (pW + 20),
         data.avoidRects[0].left
       );
-      y = data.avoidRects[0].bottom + 5;
+      y = Math.min(
+        window.innerHeight - (pH + 20),
+        data.avoidRects[0].bottom + 5
+      );
       for (let i = 0; i < data.avoidRects.length; i++) {
         const rect = data.avoidRects[i];
         if (
@@ -1002,6 +1006,7 @@ function topShowPopup (messageEvent) {
           rect.bottom > y - 5
         ) {
           if (rect.bottom + pH + 10 < window.innerHeight) {
+            // Try below the overlapped selection rectangle
             y = rect.bottom + 5 + shiftY;
           } else {
             x = rect.right + 5;
@@ -1016,7 +1021,10 @@ function topShowPopup (messageEvent) {
           window.innerWidth - (pW + 20),
           data.avoidRects[0].left
         );
-        y = data.avoidRects[0].top - (pH + 5);
+        y = Math.max(
+          0,
+          data.avoidRects[0].top - (pH + 5)
+        );
         for (let i = 0; i < data.avoidRects.length; i++) {
           const rect = data.avoidRects[i];
           if (
