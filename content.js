@@ -1035,7 +1035,7 @@ function topShowPopup (messageEvent) {
             if (rect.top - (pH + 10)  > 0) {
               y = rect.top - (pH + 5);
             } else {
-              x = rect.left - (pW + 5);
+              x = rect.left - (pW + 25);
             }
           }
         }
@@ -1059,8 +1059,16 @@ function topShowPopup (messageEvent) {
               rect.top < y + pH + 20 &&
               rect.bottom > y - 5
             ) {
-              x = window.innerWidth - (pW + 5);
-              y = window.innerHeight - (pH + 5);
+              if (data.avoidRects[0].left > window.innerWidth / 2) {
+                x = 0;
+              } else {
+                x = window.innerWidth - (pW + 5);
+              }
+              if (data.avoidRects[0].top > window.innerHeight / 2) {
+                y = 0;
+              } else {
+                y = window.innerHeight - (pH + 5);
+              }
             }
           }
         }
