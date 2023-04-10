@@ -40,13 +40,11 @@ data.split('\r\n').forEach(line => {
     if (!index[parts[0]]) {
       index[parts[0]] = [];
     }
-    if (!index[parts[0]].includes(offset)) 
-      index[parts[0]].push(offset);
+    if (!index[parts[0]].includes(offset)) { index[parts[0]].push(offset); }
     if (!index[parts[1]]) {
       index[parts[1]] = [];
     }
-    if (!index[parts[1]].includes(offset)) 
-      index[parts[1]].push(offset);
+    if (!index[parts[1]].includes(offset)) { index[parts[1]].push(offset); }
   }
   offset += line.length + 2;
 });
