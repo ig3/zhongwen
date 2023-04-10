@@ -979,78 +979,16 @@ function topShowPopup (messageEvent) {
       x = (window.innerWidth - (pW + 20)) + window.scrollX;
       y = (window.innerHeight - (pH + 20)) + window.scrollY;
     } else if (data.position === 'avoid') {
-      /*
-       * pop-up location:
-       *  Below, if it fits below without overlap with any avoidRect
-       *  Above, if it fits above without overlap with any avoidRect
-       *  Top left
-       *  Right
-       *  Bottom Right
-       */
-      // Try below, left aligned with start of selection
-      x = Math.min(
-        window.innerWidth - (pW + 20),
-        data.avoidRects[0].left
-      );
-      y = Math.min(
-        window.innerHeight - (pH + 20),
-        data.avoidRects[0].bottom + 5
-      );
-      for (let i = 0; i < data.avoidRects.length; i++) {
-        const rect = data.avoidRects[i];
-        if (
-          rect.left < x + pW + 20 &&
-          rect.right > x - 5 &&
-          rect.top < y + pH + 20 &&
-          rect.bottom > y - 5
-        ) {
-          if (rect.bottom + pH + 10 < window.innerHeight) {
-            // Try below the overlapped selection rectangle
-            y = rect.bottom + 5 + shiftY;
-          } else {
-            x = rect.right + 5;
-          }
-        }
-      }
-      if (
-        x + pW + 5 > window.innerWidth ||
-        y + pH + 5 > window.innerHeight
-      ) {
-        x = Math.min(
-          window.innerWidth - (pW + 20),
-          data.avoidRects[0].left
-        );
-        y = Math.max(
-          0,
-          data.avoidRects[0].top - (pH + 5)
-        );
-        for (let i = 0; i < data.avoidRects.length; i++) {
-          const rect = data.avoidRects[i];
-          if (
-            rect.left < x + pW + 20 &&
-            rect.right > x - 5 &&
-            rect.top < y + pH + 20 &&
-            rect.bottom > y - 5
-          ) {
-            if (rect.top - (pH + 10)  > 0) {
-              y = rect.top - (pH + 5);
-            } else {
-              x = rect.left - (pW + 25);
-            }
-          }
-        }
-        if (
-          x < 0 ||
-          y < 0
-        ) {
+      const result = below() || above() || topLeft() || bottomRight();
+      [x, y] = result;
+
+      function below () {
+        if (data.avoidRects[0].bottom + (pH + 20) < window.innerHeight) {
           x = Math.min(
-            window.innerWidth - (pW + 5),
-            data.avoidRects[0].right + 5
+            window.innerWidth - (pW + 20),
+            data.avoidRects[0].left
           );
-          y = Math.min(
-            window.innerHeight - (pH + 5),
-            data.avoidRects[0].top
-          );
+          y = data.avoidRects[0].bottom + 5;
           for (let i = 0; i < data.avoidRects.length; i++) {
             const rect = data.avoidRects[i];
             if (
@@ -1059,20 +997,93 @@ function topShowPopup (messageEvent) {
               rect.top < y + pH + 20 &&
               rect.bottom > y - 5
             ) {
-              if (data.avoidRects[0].left > window.innerWidth / 2) {
-                x = 0;
+              if (rect.right + (pW + 20) < window.innerWidth) {
+                x = rect.right + 5;
+              } else if (rect.bottom + (pH + 20) < window.innerHeight) {
+                y = rect.bottom + 5;
               } else {
-                x = window.innerWidth - (pW + 5);
-              }
-              if (data.avoidRects[0].top > window.innerHeight / 2) {
-                y = 0;
-              } else {
-                y = window.innerHeight - (pH + 5);
+                return;
               }
             }
           }
+          return [x, y];
         }
+        return;
       }
+
+      function above () {
+        if (data.avoidRects[0].top > pH + 5) {
+          x = Math.min(
+            window.innerWidth - (pW + 20),
+            data.avoidRects[0].left
+          );
+          y = data.avoidRects[0].top - (pH + 5);
+          for (let i = 0; i < data.avoidRects.length; i++) {
+            const rect = data.avoidRects[i];
+            if (
+              rect.left < x + pW + 20 &&
+              rect.right > x - 5 &&
+              rect.top < y + pH + 5 &&
+              rect.bottom > y - 5
+            ) {
+              if (rect.left >  (pW + 20)) {
+                x = rect.left - (pW + 5);
+              } else if (rect.top > pH + 20) {
+                y = rect.top - (pH + 5);
+              } else {
+                return;
+              }
+            }
+          }
+          return [x, y];
+        }
+        return;
+      }
+
+      function topLeft () {
+        x = 0;
+        y = 0;
+        for (let i = 0; i < data.avoidRects.length; i++) {
+          const rect = data.avoidRects[i];
+          if (
+            rect.left < x + pW + 20 &&
+            rect.right > x - 5 &&
+            rect.top < y + pH + 20 &&
+            rect.bottom > y - 5
+          ) {
+            return;
+          }
+        }
+        return [x, y];
+      }
+
+      function bottomRight () {
+        x = window.innerWidth - (pW + 5);
+        y = window.innerHeight - (pH + 5);
+        for (let i = 0; i < data.avoidRects.length; i++) {
+          const rect = data.avoidRects[i];
+          if (
+            rect.left < x + pW + 20 &&
+            rect.right > x - 5 &&
+            rect.top < y + pH + 20 &&
+            rect.bottom > y - 5
+          ) {
+            if (data.avoidRects[0].left > window.innerWidth / 2) {
+              x = 0;
+            } else {
+              x = window.innerWidth - (pW + 5);
+            }
+            if (data.avoidRects[0].top > window.innerHeight / 2) {
+              y = 0;
+            } else {
+              y = window.innerHeight - (pH + 5);
+            }
+            return [x, y];
+          }
+        }
+        return [x, y];
+      }
+
       x += window.scrollX;
       y += window.scrollY;
     } else {
