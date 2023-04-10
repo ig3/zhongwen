@@ -16,16 +16,35 @@
   },
   "homepage": "https://github.com/ig3/zhongwen",
   "devDependencies": {
+    "@ig3/eslint-config-entrain": "^3.0.1",
     "eslint": "^7.16.0",
-    "stylelint": "^13.8.0",
-    "stylelint-config-recommended": "^3.0.0",
+    "stylelint": "^15.4.0",
+    "stylelint-config-recommended": "^11.0.0",
     "web-ext": "^7.4.0"
   },
   "stylelint": {
     "extends": "stylelint-config-recommended"
   },
+  "eslintConfig": {
+    "extends": "@ig3/eslint-config-entrain",
+    "env": {
+      "browser": true,
+      "es6": true,
+      "jquery": true,
+      "webextensions": true
+    },
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    }
+  },
   "scripts": {
-    "lint": "eslint --fix *.js js/options.js js/wordlist.js js/zhuyin.js",
+    "lint": "eslint *.js js/options.js js/wordlist.js js/zhuyin.js",
+    "lintfix": "eslint --fix *.js js/options.js js/wordlist.js js/zhuyin.js",
     "csslint": "stylelint css/content.css css/wordlist.css",
     "build": "web-ext build -o",
     "reindex": "node ./generateIndex.js data/cedict_ts.u8 data/cedict.idx",
