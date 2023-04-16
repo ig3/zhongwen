@@ -1518,8 +1518,9 @@ chrome.runtime.onMessage.addListener(
 chrome.runtime.sendMessage({
   type: 'loaded'
 },
-(enabled) => {
-  if (enabled) {
+(response) => {
+  config = response.config;
+  if (response.enabled) {
     enableTab();
   } else {
     disableTab();

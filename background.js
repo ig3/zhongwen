@@ -287,7 +287,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
     break;
 
   case 'loaded': {
-    callback(isEnabled);
+    callback({
+      enabled: isEnabled,
+      config: zhongwenOptions
+    });
     break;
   }
 
