@@ -52,6 +52,8 @@ let config;
 
 let enableKeyboardShortcuts = false;
 
+let noChineseHasBeenSeen = true;
+
 let savedTarget;
 
 let savedRangeNode;
@@ -548,16 +550,27 @@ function triggerSearch () {
 
   const u = nodeText.charCodeAt(selStartOffset);
 
-  // not a Chinese character
-  if (isNaN(u) ||
-        (u !== 0x25CB &&
-        (u < 0x3400 || u > 0x9FFF) &&
-        (u < 0xF900 || u > 0xFAFF) &&
-        (u < 0xFF21 || u > 0xFF3A) &&
-        (u < 0xFF41 || u > 0xFF5A))) {
+  // selStartOffset is out of range of nodeText
+  if (isNaN(u)) {
     clearHighlight();
     hidePopup();
     return 3;
+  }
+
+  // Don't search if no Chinese has been seen and u isn't a Chinese character
+  if (
+    noChineseHasBeenSeen &&
+    u !== 0x25CB &&
+    (u < 0x3400 || u > 0x9FFF) &&
+    (u < 0xF900 || u > 0xFAFF) &&
+    (u < 0xFF21 || u > 0xFF3A) &&
+    (u < 0xFF41 || u > 0xFF5A)
+  ) {
+    clearHighlight();
+    hidePopup();
+    return 3;
+  } else {
+    noChineseHasBeenSeen = false;
   }
 
   const selEndList = [];

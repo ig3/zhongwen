@@ -43,6 +43,7 @@
     }
   },
   "scripts": {
+    "test": "eslint *.js js/options.js js/wordlist.js js/zhuyin.js",
     "lint": "eslint *.js js/options.js js/wordlist.js js/zhuyin.js",
     "lintfix": "eslint --fix *.js js/options.js js/wordlist.js js/zhuyin.js",
     "csslint": "stylelint css/content.css css/wordlist.css",
