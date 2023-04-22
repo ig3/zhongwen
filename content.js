@@ -1397,6 +1397,11 @@ function pinyinAndZhuyin (syllables, showToneColors, pinyinClass) {
   let text = '';
   let html = '';
   let zhuyin = '';
+  let zhuyinClass = 'w-zhuyin';
+  if (config.fontSize === 'small') {
+    zhuyinClass += '-small';
+  }
+
   const a = syllables.split(/[\s·]+/);
   for (let i = 0; i < a.length; i++) {
     const syllable = a[i];
@@ -1432,23 +1437,24 @@ function pinyinAndZhuyin (syllables, showToneColors, pinyinClass) {
       continue;
     }
     const m = parse(syllable);
-    if (showToneColors) {
-      html += '<span class="' + pinyinClass + ' tone' + m[4] + '">';
+    if (m) {
+      if (showToneColors) {
+        html += '<span class="' + pinyinClass + ' tone' + m[4] + '">';
+      } else {
+        html += '<span class="' + pinyinClass + '">';
+      }
+      const t = tonify(m[2], m[4]);
+      html += m[1] + t[0] + m[3];
+      html += '</span>';
+      text += m[1] + t[1] + m[3];
+
+      zhuyin += '<span class="tone' + m[4] + ' ' + zhuyinClass + '">' +
+              globalThis.numericPinyin2Zhuyin(syllable) + '</span>';
     } else {
-      html += '<span class="' + pinyinClass + '">';
+      html += '<span class="' + pinyinClass + ' tone5">' + syllable + '</span>';
+      text += syllable;
+      zhuyin += '<span class="' + zhuyinClass + '">' + syllable + '</span>';
     }
-    const t = tonify(m[2], m[4]);
-    html += m[1] + t[0] + m[3];
-    html += '</span>';
-    text += m[1] + t[1] + m[3];
-
-    let zhuyinClass = 'w-zhuyin';
-    if (config.fontSize === 'small') {
-      zhuyinClass += '-small';
-    }
-
-    zhuyin += '<span class="tone' + m[4] + ' ' + zhuyinClass + '">' +
-            globalThis.numericPinyin2Zhuyin(syllable) + '</span>';
   }
   return [html, text, zhuyin];
 }
