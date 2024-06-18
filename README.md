@@ -223,6 +223,13 @@ Firefox add-on manager, Install Add-on from file...
 $ npm run update-cedict
 ```
 
+Then update version in package.json and manifest.json, then re-build the
+plugin:
+
+```
+$ npm run build
+```
+
 ## Legal
 This program is free software;
 you can redistribute it and/or modify it under the terms of the

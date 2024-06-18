@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "@ig3/zhongwen: Chinese-English Dictionary",
   "short_name": "@ig3/zhongwen",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Chinese-English pop-up dictionary.",
   "homepage_url": "https://github.com/ig3/zhongwen",
   "browser_specific_settings": {
