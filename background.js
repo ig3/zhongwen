@@ -275,19 +275,19 @@ function createTab (url, tabType) {
   });
 }
 
-chrome.runtime.onMessage.addListener(function (request, sender, callback) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   let tabID;
 
   switch (request.type) {
   case 'search': {
     const response = search(request.text);
     response.originalText = request.originalText;
-    callback(response);
+    sendResponse(response);
   }
     break;
 
   case 'loaded': {
-    callback({
+    sendResponse({
       enabled: isEnabled,
       config: zhongwenOptions
     });
